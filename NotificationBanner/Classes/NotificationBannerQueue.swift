@@ -48,11 +48,11 @@ public class NotificationBannerQueue: NSObject {
             banners.append(banner)
             
             if banners.index(of: banner) == 0 {
-                banner.show(placeOnQueue: false)
+                banner.show(placeOnQueue: false, bannerPosition: banner.bannerPosition)
             }
             
         } else {
-            banner.show(placeOnQueue: false)
+            banner.show(placeOnQueue: false, bannerPosition: banner.bannerPosition)
             
             if let firstBanner = banners.first {
                 firstBanner.suspend()
@@ -84,5 +84,12 @@ public class NotificationBannerQueue: NSObject {
         }
         
         callback(false)
+    }
+    
+    /**
+        Removes all notification banners from the queue
+    */
+    public func removeAll() {
+        banners.removeAll()
     }
 }

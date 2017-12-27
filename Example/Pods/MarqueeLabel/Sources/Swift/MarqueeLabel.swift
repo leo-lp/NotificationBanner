@@ -337,12 +337,19 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
     @IBInspectable open var animationDelay: CGFloat = 1.0
     
     
-    /** The read-only duration of the scroll animation (not including delay).
+    /** The read-only/computed duration of the scroll animation (not including delay).
      
-     The value of this property is calculated from the value set to the `speed` property. If a .duration value is
-     used to set the label animation speed, this value will be equivalent.
+     The value of this property is calculated from the value set to the `speed` property. If a duration-type speed is
+     used to set the label animation speed, `animationDuration` will be equivalent to that value.
      */
-    private(set) public var animationDuration: CGFloat = 0.0
+    public var animationDuration: CGFloat {
+        switch self.speed {
+        case .rate(let rate):
+            return CGFloat(fabs(self.awayOffset) / rate)
+        case .duration(let duration):
+            return duration
+        }
+    }
     
     //
     // MARK: - Class Functions and Helpers
@@ -363,7 +370,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
      - SeeAlso: controllerViewDidAppear:
      - SeeAlso: controllerViewWillAppear:
      */
-    class func restartLabelsOfController(_ controller: UIViewController) {
+    open class func restartLabelsOfController(_ controller: UIViewController) {
         MarqueeLabel.notifyController(controller, message: .Restart)
     }
     
@@ -376,7 +383,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
      - SeeAlso: restartLabel
      - SeeAlso: controllerViewDidAppear
      */
-    class func controllerViewWillAppear(_ controller: UIViewController) {
+    open class func controllerViewWillAppear(_ controller: UIViewController) {
         MarqueeLabel.restartLabelsOfController(controller)
     }
     
@@ -389,7 +396,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
      - SeeAlso: restartLabel
      - SeeAlso: controllerViewWillAppear
      */
-    class func controllerViewDidAppear(_ controller: UIViewController) {
+    open class func controllerViewDidAppear(_ controller: UIViewController) {
         MarqueeLabel.restartLabelsOfController(controller)
     }
     
@@ -401,7 +408,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
      - Parameter controller: The view controller for which all `MarqueeLabel` instances should be labelized.
      - SeeAlso: labelize
      */
-    class func controllerLabelsLabelize(_ controller: UIViewController) {
+    open class func controllerLabelsLabelize(_ controller: UIViewController) {
         MarqueeLabel.notifyController(controller, message: .Labelize)
     }
     
@@ -413,7 +420,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
      - Parameter controller: The view controller for which all `MarqueeLabel` instances should be de-labelized.
      - SeeAlso: labelize
      */
-    class func controllerLabelsAnimate(_ controller: UIViewController) {
+    open class func controllerLabelsAnimate(_ controller: UIViewController) {
         MarqueeLabel.notifyController(controller, message: .Animate)
     }
 
@@ -517,7 +524,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
         let properties = ["baselineAdjustment", "enabled", "highlighted", "highlightedTextColor",
                           "minimumFontSize", "shadowOffset", "textAlignment",
                           "userInteractionEnabled", "adjustsFontSizeToFitWidth",
-                          "lineBreakMode", "numberOfLines"]
+                          "lineBreakMode", "numberOfLines", "contentMode"]
         
         // Iterate through properties
         sublabel.text = super.text
@@ -607,16 +614,6 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
         
         // Label DOES need to scroll
         
-        // Recompute the animation duration
-        animationDuration = {
-            switch self.speed {
-            case .rate(let rate):
-                return CGFloat(fabs(self.awayOffset) / rate)
-            case .duration(let duration):
-                return duration
-            }
-        }()
-        
         // Spacing between primary and second sublabel must be at least equal to leadingBuffer, and at least equal to the fadeLength
         let minTrailing = max(max(leadingBuffer, trailingBuffer), fadeLength)
         
@@ -698,8 +695,7 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
                     FadeStep(timeStep: -0.2, edgeFades: [.leading, .trailing]),                     // Maintain fade state until 0.2 sec before reaching away position
                     ScrollStep(timeStep: animationDuration, timingFunction: animationCurve,         // Away position, using animationCurve transition, with only leading edge faded in
                         position: .away, edgeFades: .leading),
-                    ScrollStep(timeStep: 60*60*24*365.0,                                            // "Delay" at away, for huge time to effectie stay at away permanently
-                               position: .away, edgeFades: .leading),
+                    ScrollStep(timeStep: animationDelay, position: .away, edgeFades: .leading),     // "Delay" at away, maintaining fade state
                 ]
             }
         }
@@ -879,6 +875,11 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
         // Perform scroll animation
         scroller.anim.setValue(true, forKey: MarqueeKeys.CompletionClosure.rawValue)
         scroller.anim.delegate = self
+        if type == .left || type == .right {
+            // Make it stay at away permanently
+            scroller.anim.isRemovedOnCompletion = false
+            scroller.anim.fillMode = kCAFillModeForwards
+        }
         sublabel.layer.add(scroller.anim, forKey: "position")
         
         CATransaction.commit()
@@ -1560,6 +1561,17 @@ open class MarqueeLabel: UILabel, CAAnimationDelegate {
         sublabel.tintColorDidChange()
     }
     
+    override open var contentMode: UIViewContentMode {
+        get {
+            return sublabel.contentMode
+        }
+        
+        set {
+            super.contentMode = contentMode
+            sublabel.contentMode = newValue
+        }
+    }
+    
 
     //
     // MARK: - Support
@@ -1640,7 +1652,7 @@ public struct ScrollStep: MarqueeStep {
     */
     public let edgeFades: EdgeFade
     
-    init(timeStep: CGFloat, timingFunction: UIViewAnimationCurve = .linear, position: Position, edgeFades: EdgeFade) {
+    public init(timeStep: CGFloat, timingFunction: UIViewAnimationCurve = .linear, position: Position, edgeFades: EdgeFade) {
         self.timeStep = timeStep
         self.position = position
         self.edgeFades = edgeFades
@@ -1686,7 +1698,7 @@ public struct FadeStep: MarqueeStep {
      */
     public let edgeFades: EdgeFade
     
-    init(timeStep: CGFloat, timingFunction: UIViewAnimationCurve = .linear, edgeFades: EdgeFade) {
+    public init(timeStep: CGFloat, timingFunction: UIViewAnimationCurve = .linear, edgeFades: EdgeFade) {
         self.timeStep = timeStep
         self.timingFunction = timingFunction
         self.edgeFades = edgeFades

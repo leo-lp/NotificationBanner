@@ -1,12 +1,13 @@
 ![Notification Banner](NotificationBanner/Assets/header.png)
 
 [![Version](https://img.shields.io/cocoapods/v/NotificationBannerSwift.svg?style=flat)](http://cocoapods.org/pods/NotificationBannerSwift)
+<a href="https://github.com/Carthage/Carthage/"><img src="https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat"></a>
 [![Platform](https://img.shields.io/cocoapods/p/NotificationBannerSwift.svg?style=flat)](http://cocoapods.org/pods/NotificationBannerSwift)
-<a href="https://developer.apple.com/swift"><img src="https://img.shields.io/badge/swift-3.0-4BC51D.svg?style=flat" alt="Language: Swift" /></a>
-![Carthage](https://img.shields.io/badge/Carthage-✓-5f7cae.svg?style=flat)
+<a href="https://developer.apple.com/swift"><img src="https://img.shields.io/badge/swift-4.0-4BC51D.svg?style=flat" alt="Language: Swift" /></a>
+[![Downloads](https://img.shields.io/cocoapods/dt/NotificationBannerSwift.svg)](http://cocoapods.org/pods/NotificationBannerSwift)
+[![Apps](https://img.shields.io/cocoapods/at/NotificationBannerSwift.svg)](http://cocoapods.org/pods/NotificationBannerSwift)
 [![License](https://img.shields.io/cocoapods/l/NotificationBannerSwift.svg?style=flat)](http://cocoapods.org/pods/NotificationBannerSwift)
-
-## Written in Swift 3
+## Written in Swift 4
 
 NotificationBanner is an extremely customizable and lightweight library that makes the task of displaying in app notification banners and drop down alerts an absolute breeze in iOS.
 
@@ -17,18 +18,19 @@ NotificationBanner is an extremely customizable and lightweight library that mak
 ## Features
 - Highly customizable ✅
 - `NSAttributedString` support ✅
-- iPhone & iPad Support ✅
+- iPhone, iPhoneX, & iPad Support ✅
 - Orientation change support ✅
 - Custom `UIView` support ✅
 - Custom colors support ✅
 - Scrolling label support for banners with long titles/subtitles ✅
+- Presenting from top or bottom support ✅
 - Haptic feeback support ✅
 - Built in banner queue ✅
 
 ## Requirements
 
  - iOS 9.0+
- - Xcode 8.1+
+ - Xcode 9.0+
 
 ## Installation
 
@@ -36,6 +38,8 @@ NotificationBanner is an extremely customizable and lightweight library that mak
 
 NotificationBanner is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
+
+#### Swift 4
 
 ```ruby
 pod 'NotificationBannerSwift'
@@ -47,8 +51,9 @@ Then add `import NotificationBannerSwift` at the top of each file you use Notifi
 
 To use NotificationBanner via Carthage simply add this line to your `Cartfile`:
 
+#### Swift 4
 ```swift
-github "Daltron/NotificationBanner" ~> 1.3.1
+github "Daltron/NotificationBanner" "master"
 ```
 
 Then add `NotificationBanner.framework` and the dependencies `SnapKit.framework` and `MarqueeLabelSwift.framework` in your project.
@@ -75,6 +80,14 @@ By default, each banner will be displayed on the main application window. If you
 banner.show(on: viewController)
 ```
 
+By default, each banner will present from the top. If you are wanting to display from the bottom, simply:
+
+```swift
+banner.show(bannerPosition: .bottom)
+```
+
+Each of the show properties defined above can be mixed and matched to work flawlessly with eachother.
+
 By default, each banner will automatically dismiss after 5 seconds. To dismiss programatically, simply:
 
 ```swift
@@ -84,7 +97,7 @@ banner.dismiss()
 To show a banner infinitely until it is manually dismissed, simply:
 
 ```swift
-banner.autoDimiss = false
+banner.autoDismiss = false
 ```
 
 NotificationBanner has five prebuilt styles that you can choose from:
@@ -137,7 +150,7 @@ By default, the `.info` style will be applied to the banner if no style is provi
 
 ### Banners with Side Views
 
-A notification banner can have a left acessory view, a right acessory view, or both:
+A notification banner can have a left accessory view, a right accessory view, or both:
 
 ```swift
 // Success Style Notification with Left View
@@ -186,6 +199,22 @@ banner.onSwipeUp = {
 }
 ```
 
+### Banner Events
+
+You can choose to opt into a notification banner's events by registering as its delegate:
+
+```swift
+banner.delegate = self
+```
+Then just make sure to implement the following methods:
+
+```swift
+internal func notificationBannerWillAppear(_ banner: BaseNotificationBanner)
+internal func notificationBannerDidAppear(_ banner: BaseNotificationBanner)
+internal func notificationBannerWillDisappear(_ banner: BaseNotificationBanner)
+internal func notificationBannerDidDisappear(_ banner: BaseNotificationBanner)
+```
+
 ## Haptic Feedback Support
 By default, when a banner is displayed, a haptic feedback will be generated on devices that support it. The types of haptic feedback are as follows:
 
@@ -225,6 +254,12 @@ let numberOfBanners = NotificationBannerQueue.default.numberOfBanners
 ## Feature Requests
 
 I'd love to know anything that you think NotificationBanner is missing. Open an issue and I'll add the `feature request` label to it and I'll do everything I can to accomodate that request if it is in the library's best interest. 😄 
+
+## Apps that Use NotificationBanner
+[![Q - Talk About Music](AppIcons/q_talk_about_music.jpg)](https://itunes.apple.com/us/app/q-talk-about-music/id1071551321?mt=8) 
+[![VH Dispatch](AppIcons/vh_dispatch.png)](https://itunes.apple.com/us/app/vh-dispatch/id1249569084?mt=8)
+ 
+#### Feel free to add yours!
 
 ## Author
 
